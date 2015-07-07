@@ -15,7 +15,7 @@ using namespace clang::tooling;
 class DefHandler : public MatchFinder::MatchCallback
 {
 public:
-    QualType removePointer(QualType type)
+    QualType removeSmartPointer(QualType type)
     {
         auto ret = type;
 
@@ -42,20 +42,25 @@ public:
         auto name = stringLiteral->getString().str();
         auto parentRecord = method->getParent();
 
-        auto returnType = removePointer(method->getReturnType());
+        auto returnType = removeSmartPointer(method->getReturnType());
 
-        std::cout << "Bound name: " << stringLiteral->getString().str() << "\n";
-        std::cout << "Bound function: " << method->getNameAsString() << "\n";
-        std::cout << "\tParent: " << parentRecord->getNameAsString() << "\n";
-        std::cout << "\tReturn: " << returnType.getAsString() << "\n";
+        std::cout   << returnType.getAsString() << " "
+                    << parentRecord->getNameAsString() << ":"
+                    << name << "(";
+
+        bool first = true;
         for (auto param : method->params())
         {
-            auto type = removePointer(param->getType());
+            auto type = removeSmartPointer(param->getType());
 
-            std::cout   << "\tParameter: " << type.getAsString() 
-                        << " " << param->getNameAsString()
-                        << "\n";
+            if (!first)
+                std::cout << ", ";
+
+            std::cout << type.getAsString() << " " << param->getNameAsString();
+            first = false;
         }
+
+        std::cout << ")\n";
     }
 };
 
