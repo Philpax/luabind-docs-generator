@@ -41,17 +41,17 @@ public:
 
     virtual void run(MatchFinder::MatchResult const& result)
     {
-        auto stringLiteral = result.Nodes.getNodeAs<StringLiteral>("name");
+        auto def = result.Nodes.getNodeAs<CXXMemberCallExpr>("def");
+        auto className = result.Nodes.getNodeAs<StringLiteral>("className");
+        auto name = result.Nodes.getNodeAs<StringLiteral>("name");
         auto method = result.Nodes.getNodeAs<CXXMethodDecl>("method");
 
-        auto name = stringLiteral->getString().str();
         auto parentRecord = method->getParent();
-
         auto returnType = transformType(method->getReturnType());
 
         std::cout   << returnType.getAsString() << " "
-                    << parentRecord->getNameAsString() << ":"
-                    << name << "(";
+                    << className->getString().str() << ":"
+                    << name->getString().str() << "(";
 
         bool first = true;
         for (auto param : method->params())
@@ -83,6 +83,20 @@ int main(int argc, const char** argv)
     auto defMatcher = 
         memberCallExpr
         (
+            // Match the class_ constructor
+            hasDescendant
+            (
+                constructExpr
+                (
+                    hasAnyArgument
+                    (
+                        ignoringImpCasts
+                        (
+                            stringLiteral().bind("className")
+                        )
+                    )
+                )
+            ),
             // Match class_ member calls
             on
             (
