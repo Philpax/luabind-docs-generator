@@ -15,6 +15,25 @@ using namespace clang::tooling;
 class DefHandler : public MatchFinder::MatchCallback
 {
 public:
+    QualType removePointer(QualType type)
+    {
+        auto ret = type;
+
+        // Handle smart pointer case
+        auto record =
+            dyn_cast_or_null<ClassTemplateSpecializationDecl>(type->getAsCXXRecordDecl());
+
+        if (record)
+        {
+            // If we're dealing with a smart pointer, replace the return type
+            // with the original type
+            if (record->getNameAsString().find("_ptr") != std::string::npos)
+                ret = record->getTemplateArgs()[0].getAsType();
+        }
+
+        return ret;
+    }
+
     virtual void run(MatchFinder::MatchResult const& result)
     {
         auto stringLiteral = result.Nodes.getNodeAs<StringLiteral>("name");
@@ -23,13 +42,17 @@ public:
         auto name = stringLiteral->getString().str();
         auto parentRecord = method->getParent();
 
+        auto returnType = removePointer(method->getReturnType());
+
         std::cout << "Bound name: " << stringLiteral->getString().str() << "\n";
         std::cout << "Bound function: " << method->getNameAsString() << "\n";
         std::cout << "\tParent: " << parentRecord->getNameAsString() << "\n";
-        std::cout << "\tReturn: " << method->getReturnType().getAsString() << "\n";
+        std::cout << "\tReturn: " << returnType.getAsString() << "\n";
         for (auto param : method->params())
         {
-            std::cout   << "\tParameter: " << param->getType().getAsString() 
+            auto type = removePointer(param->getType());
+
+            std::cout   << "\tParameter: " << type.getAsString() 
                         << " " << param->getNameAsString()
                         << "\n";
         }
