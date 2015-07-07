@@ -61,6 +61,10 @@ public:
             if (!first)
                 std::cout << ", ";
 
+            auto typeString = type.getAsString();
+            if (typeString.find("lua_State") != std::string::npos)
+                continue;
+
             std::cout << type.getAsString() << " " << param->getNameAsString();
             first = false;
         }
