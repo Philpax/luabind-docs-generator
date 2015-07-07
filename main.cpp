@@ -36,6 +36,10 @@ public:
         type = removeSmartPointer(type);
         type = type.getNonReferenceType();
         type = type.getUnqualifiedType();
+        
+        if (auto pointerType = dyn_cast<PointerType>(type.getTypePtr()))
+            type = transformType(pointerType->getPointeeType());
+
         return type;
     }
 
