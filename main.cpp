@@ -17,9 +17,6 @@ class DefHandler : public MatchFinder::MatchCallback
 public:
     QualType removeSmartPointer(QualType type)
     {
-        auto ret = type;
-
-        // Handle smart pointer case
         auto record =
             dyn_cast_or_null<ClassTemplateSpecializationDecl>(type->getAsCXXRecordDecl());
 
@@ -28,10 +25,18 @@ public:
             // If we're dealing with a smart pointer, replace the return type
             // with the original type
             if (record->getNameAsString().find("_ptr") != std::string::npos)
-                ret = record->getTemplateArgs()[0].getAsType();
+                type = record->getTemplateArgs()[0].getAsType();
         }
 
-        return ret;
+        return type;
+    }
+
+    QualType transformType(QualType type)
+    {
+        type = removeSmartPointer(type);
+        type = type.getNonReferenceType();
+        type = type.getUnqualifiedType();
+        return type;
     }
 
     virtual void run(MatchFinder::MatchResult const& result)
@@ -42,7 +47,7 @@ public:
         auto name = stringLiteral->getString().str();
         auto parentRecord = method->getParent();
 
-        auto returnType = removeSmartPointer(method->getReturnType());
+        auto returnType = transformType(method->getReturnType());
 
         std::cout   << returnType.getAsString() << " "
                     << parentRecord->getNameAsString() << ":"
@@ -51,7 +56,7 @@ public:
         bool first = true;
         for (auto param : method->params())
         {
-            auto type = removeSmartPointer(param->getType());
+            auto type = transformType(param->getType());
 
             if (!first)
                 std::cout << ", ";
