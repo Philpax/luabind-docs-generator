@@ -36,7 +36,7 @@ public:
         type = removeSmartPointer(type);
         type = type.getNonReferenceType();
         type = type.getUnqualifiedType();
-        
+
         if (auto pointerType = dyn_cast<PointerType>(type.getTypePtr()))
             type = transformType(pointerType->getPointeeType());
 
@@ -84,7 +84,7 @@ int main(int argc, const char** argv)
     ClangTool Tool(op.getCompilations(), op.getSourcePathList());
 
     // match lb::class_<*>("*").def("name", &C::F)
-    auto defMatcher = 
+    auto defMatcher =
         memberCallExpr
         (
             // Match the class_ constructor
