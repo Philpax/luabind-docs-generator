@@ -203,7 +203,9 @@ int main(int argc, const char** argv)
                 if (typeString.find("lua_State") != std::string::npos)
                     continue;
 
-                std::cout << typeString << " " << param->getNameAsString();
+                std::cout << typeString << " ";
+                auto paramName = param->getName();
+                printf("%.*s", int(paramName.size()), paramName.data());
                 first = false;
             }
 
